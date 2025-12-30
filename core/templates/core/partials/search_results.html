@@ -1,0 +1,52 @@
+{% if projects or tasks %}
+<div class="absolute z-10 mt-2 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
+    {% if projects %}
+    <div class="px-4 py-2 bg-gray-50 border-b border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-700">Projects</h3>
+    </div>
+    <div class="divide-y divide-gray-200">
+        {% for project in projects %}
+        <a 
+            href="{% url 'core:project_detail' project.id %}"
+            class="block px-4 py-3 hover:bg-blue-50 transition-colors"
+        >
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-gray-900">{{ project.name }}</p>
+                    <p class="text-xs text-gray-500">{{ project.tenant.name }}</p>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if tasks %}
+    <div class="px-4 py-2 bg-gray-50 border-b border-gray-200 {% if projects %}border-t{% endif %}">
+        <h3 class="text-sm font-semibold text-gray-700">Tasks</h3>
+    </div>
+    <div class="divide-y divide-gray-200">
+        {% for task in tasks %}
+        <a 
+            href="{% url 'core:project_detail' task.project.id %}"
+            class="block px-4 py-3 hover:bg-blue-50 transition-colors"
+        >
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-gray-900 {% if task.is_done %}task-done{% endif %}">{{ task.title }}</p>
+                    <p class="text-xs text-gray-500">{{ task.project.name }} • {{ task.tenant.name }}</p>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+

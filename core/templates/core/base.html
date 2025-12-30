@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Multi-Tenant SaaS{% endblock %}</title>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+        }
+        .htmx-request .htmx-indicator {
+            opacity: 1;
+        }
+        .htmx-request.htmx-indicator {
+            opacity: 1;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .task-done {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'core:dashboard' %}" class="text-xl font-bold text-blue-600">
+                        Multi-Tenant SaaS
+                    </a>
+                    {% if tenant %}
+                    <span class="ml-4 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                        {{ tenant.name }}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Search Bar -->
+                    <div class="relative">
+                        <input 
+                            type="search" 
+                            name="q"
+                            placeholder="Search..."
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            hx-get="{% url 'core:search' %}"
+                            hx-trigger="keyup changed delay:300ms"
+                            hx-target="#search-results"
+                            hx-indicator=".search-indicator"
+                        >
+                        <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <div class="search-indicator htmx-indicator absolute right-3 top-2.5">
+                            <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    {% if user.is_authenticated %}
+                    <div class="flex items-center space-x-3">
+                        <span class="text-gray-700">{{ user.username }}</span>
+                        <a href="{% url 'logout' %}" class="text-gray-600 hover:text-gray-900">
+                            Logout
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Results Dropdown -->
+        <div id="search-results" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"></div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="bg-{{ message.tags }}-100 border border-{{ message.tags }}-400 text-{{ message.tags }}-700 px-4 py-3 rounded relative fade-in" role="alert">
+            <span class="block sm:inline">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2"></div>
+
+    <script>
+        // Handle HTMX events for toast notifications
+        document.body.addEventListener('projectCreated', function(evt) {
+            showToast('Project created successfully!', 'success');
+        });
+        
+        document.body.addEventListener('projectUpdated', function(evt) {
+            showToast('Project updated successfully!', 'success');
+        });
+        
+        document.body.addEventListener('projectDeleted', function(evt) {
+            showToast('Project deleted successfully!', 'success');
+        });
+        
+        document.body.addEventListener('taskCreated', function(evt) {
+            showToast('Task created successfully!', 'success');
+        });
+        
+        document.body.addEventListener('taskUpdated', function(evt) {
+            showToast('Task updated successfully!', 'success');
+        });
+        
+        document.body.addEventListener('taskDeleted', function(evt) {
+            showToast('Task deleted successfully!', 'success');
+        });
+        
+        document.body.addEventListener('taskToggled', function(evt) {
+            showToast('Task status updated!', 'success');
+        });
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg fade-in`;
+            toast.textContent = message;
+            
+            document.getElementById('toast-container').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                toast.style.transition = 'all 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Clear search results when input is empty
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            const searchInput = document.querySelector('input[name="q"]');
+            if (searchInput && searchInput.value === '') {
+                document.getElementById('search-results').innerHTML = '';
+            }
+        });
+    </script>
+</body>
+</html>
+

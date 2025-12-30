@@ -1,0 +1,35 @@
+<form 
+    hx-post="{% if task %}{% url 'core:task_edit' task.id %}{% else %}{% url 'core:task_create' project.id %}{% endif %}"
+    hx-target="{% if task %}#task-{{ task.id }}{% else %}#tasks-list{% endif %}"
+    hx-swap="{% if task %}outerHTML{% else %}afterbegin{% endif %}"
+    class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4"
+>
+    {% csrf_token %}
+    <div class="flex items-center space-x-3">
+        <div class="flex-1">
+            <input 
+                type="text" 
+                name="title" 
+                value="{% if task %}{{ task.title }}{% endif %}"
+                placeholder="Enter task title..." 
+                required
+                autofocus
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+        </div>
+        <button 
+            type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+        >
+            {% if task %}Update{% else %}Create{% endif %}
+        </button>
+        <button 
+            type="button"
+            class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors"
+            onclick="this.closest('form').remove()"
+        >
+            Cancel
+        </button>
+    </div>
+</form>
+

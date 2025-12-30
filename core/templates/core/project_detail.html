@@ -1,0 +1,155 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ project.name }} - Multi-Tenant SaaS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'core:dashboard' %}" class="text-blue-600 hover:text-blue-800 flex items-center mb-4">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Dashboard
+    </a>
+    
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ project.name }}</h1>
+            <p class="mt-2 text-gray-600">Tenant: {{ project.tenant.name }}</p>
+        </div>
+        <button 
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            hx-get="{% url 'core:task_create' project.id %}"
+            hx-target="#task-form-container"
+            hx-swap="innerHTML"
+        >
+            <span class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                New Task
+            </span>
+        </button>
+    </div>
+</div>
+
+<!-- Task Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-3 bg-blue-100 rounded-full">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm text-gray-600">Total Tasks</p>
+                <p class="text-2xl font-bold text-gray-900">{{ tasks.count }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-3 bg-green-100 rounded-full">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm text-gray-600">Completed</p>
+                <p class="text-2xl font-bold text-gray-900">{{ tasks|filter_by_done:True|length }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-3 bg-yellow-100 rounded-full">
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm text-gray-600">In Progress</p>
+                <p class="text-2xl font-bold text-gray-900">{{ tasks|filter_by_done:False|length }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks Section -->
+<div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">Tasks</h2>
+    </div>
+    
+    <!-- Task Form Container -->
+    <div id="task-form-container" class="px-6 py-4"></div>
+    
+    <!-- Tasks List -->
+    <div id="tasks-list" class="divide-y divide-gray-200">
+        {% if tasks %}
+            {% for task in tasks %}
+            <div class="px-6 py-4 hover:bg-gray-50 transition-colors" id="task-{{ task.id }}">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center flex-1">
+                        <input 
+                            type="checkbox" 
+                            {% if task.is_done %}checked{% endif %}
+                            class="h-5 w-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
+                            hx-post="{% url 'core:task_toggle' task.id %}"
+                            hx-target="#task-{{ task.id }}"
+                            hx-swap="outerHTML swap:200ms"
+                        >
+                        <div class="ml-3">
+                            <h3 class="text-base font-medium text-gray-900 {% if task.is_done %}task-done{% endif %}">
+                                {{ task.title }}
+                            </h3>
+                            <p class="text-sm text-gray-500">Tenant: {{ task.tenant.name }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button 
+                            class="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            hx-get="{% url 'core:task_edit' task.id %}"
+                            hx-target="#task-form-container"
+                        >
+                            Edit
+                        </button>
+                        <button 
+                            class="text-red-600 hover:text-red-800 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                            hx-delete="{% url 'core:task_delete' task.id %}"
+                            hx-target="#task-{{ task.id }}"
+                            hx-swap="outerHTML swap:300ms"
+                            hx-confirm="Are you sure you want to delete this task?"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="px-6 py-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No tasks</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by creating a new task.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Reset form after task is created or updated
+    document.body.addEventListener('taskCreated', function(evt) {
+        document.getElementById('task-form-container').innerHTML = '';
+    });
+    
+    document.body.addEventListener('taskUpdated', function(evt) {
+        document.getElementById('task-form-container').innerHTML = '';
+    });
+</script>
+{% endblock %}
+
